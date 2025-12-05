@@ -135,7 +135,7 @@ for df in coef_raw:
     df.columns.values[J_index] = 'lod'  # 列名も更新
     
     
-print("✅ J列目（インデックス J-1）の値が 'lod_raw[avg_lod]' の値で置き換えられました。")
+print("J列目（インデックス J-1）の値が 'lod_raw[avg_lod]' の値で置き換えられました。")
 
 coef_df       = [coef_raw[d].loc[tS:fE]    for d in range(5)]
 coef_train_df = [coef_df[d] .loc[tS:tE]    for d in range(5)]
@@ -166,7 +166,7 @@ for Rmatrix in Rmatrix_raw:
     # この操作で、1で0になった右下隅の要素が置き換え値で上書きされます。
     Rmatrix[target_index, target_index, :] = replace_values_sq.values
     
-print("✅ Rmatrix_rawの各行列について、最終行と最終列が操作されました。")
+print("Rmatrix_rawの各行列について、最終行と最終列が操作されました。")
 print(f"操作対象の行/列インデックスは {target_index} (J) です。")
 
 Rmatrix_train = [Rmatrix_raw[d][:, :, idx_tS:idx_tE + 1] for d in range(5)]
