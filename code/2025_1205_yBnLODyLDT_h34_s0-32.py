@@ -1,6 +1,6 @@
-### Learn the core field snapshot g(t) using EKF-RNN:
+### Learn the core field snapshot g(t) and d(LOD)/dt using EKF-RNN:
 # Author: Sho Sato
-# Date: 2024-08-28, last update: 2025-12-05
+# Date: 2025-12-05, last update: 2025-12-05
 # d_max=0-4, Drec=34, w0_seed="00000" - "11111" (32 patterns)
 # The estimated execution time for each (d, seed) pair is about 6 hours on M1 Macbook Pro.
 # So the total execution time for all d_max (0-4) and seed (0-31) is about 6 hours × 5 × 32 = 960 hours = 40 days.
@@ -27,7 +27,7 @@ print(f"    Pandas {pd.__version__}")
 ### Configuration -----------------------------------------------------------
 # load/save directories
 load_src = "./data/processed"
-save_dir = "./output/2025_1017_yBnLODnLDT_h34_s0-32"
+save_dir = "./output/2025_1205_yBnLODyLDT_h34_s0-32"
 
 # parameters
 dt = 0.25 # dt=0.25yrs (more precisely 365.25×0.25 days)
@@ -42,7 +42,7 @@ tE = 2018.6247 # training End   time (15 yrs)
 fS = 2018.8749 # forecast Start time
 fE = 2023.6254 # forecast End   time
 
-J = 195 # Number of Gauss coefficients up to degree n=13
+J = 195 + 1 # Number of Gauss coefficients up to degree n=13, + LOD
 
 ### Define functions ---------------------------------------------------------
 # Define initial state w0 generator
@@ -87,8 +87,14 @@ d2R_raw = np.load(f"{load_src}/cvar_d2R.npy")
 d3R_raw = np.load(f"{load_src}/cvar_d3R.npy")
 d4R_raw = np.load(f"{load_src}/cvar_d4R.npy")
 
+lod_raw = pd.read_csv(f"{load_src}/DlodDT.csv")
+lod_raw.set_index('YEAR', inplace=True)
+
 # Create training / validation data
 time = d0g_raw.index.values
+print("gcf_time", time)
+print("d0R_time", d0R_raw[0, 0, :])
+print("lod_time", lod_raw.index.values)
 
 idx_tS = np.where(time == tS)[0][0]
 idx_tE = np.where(time == tE)[0][0]
@@ -106,22 +112,68 @@ N = idx_fE - idx_tS + 1 # Number of all data (training + forecast)
 
 print(f"training size: L={L}, validation size: M={M}, all data size: N={N}")
 
-coef_raw      = [d0g_raw.iloc[:, :195], 
-                 d1g_raw.iloc[:, :195], 
-                 d2g_raw.iloc[:, :195], 
-                 d3g_raw.iloc[:, :195], 
-                 d4g_raw.iloc[:, :195]]
+coef_raw      = [d0g_raw.iloc[:, :J], 
+                 d1g_raw.iloc[:, :J], 
+                 d2g_raw.iloc[:, :J], 
+                 d3g_raw.iloc[:, :J], 
+                 d4g_raw.iloc[:, :J]]
+
+# 置き換え対象の列インデックス
+J_index = J - 1
+# 置き換えたい値のシリーズ
+replace_values = lod_raw['avg_lod']
+# リスト内の各DataFrameに対して処理を実行
+for df in coef_raw:
+    # DataFrameの行数が置き換え値の数と一致しているか確認
+    if len(df) != len(replace_values):
+        print(f"⚠️ 警告: DataFrameの行数 ({len(df)}) が 'avg_lod' の数 ({len(replace_values)}) と一致しません。")
+        raise ValueError("行数の不一致により、置き換えを実行できません。")
+        
+    # J列目（インデックス J-1）の値を一括で置き換え
+    # loc を使用して、列インデックス J_index にある全ての行の値を代入
+    df.iloc[:, J_index] = replace_values.values
+    df.columns.values[J_index] = 'lod'  # 列名も更新
+    
+    
+print("✅ J列目（インデックス J-1）の値が 'lod_raw[avg_lod]' の値で置き換えられました。")
+
 coef_df       = [coef_raw[d].loc[tS:fE]    for d in range(5)]
 coef_train_df = [coef_df[d] .loc[tS:tE]    for d in range(5)]
 coef_train    = [coef_train_df[d].values.T for d in range(5)]
 
-Rmatrix_raw   = [d0R_raw[:196, :196, :], 
-                 d1R_raw[:196, :196, :], 
-                 d2R_raw[:196, :196, :], 
-                 d3R_raw[:196, :196, :], 
-                 d4R_raw[:196, :196, :]]
-Rmatrix_train = [Rmatrix_raw[d][:, :, idx_tS:idx_tE + 1] for d in range(5)]
+Rmatrix_raw   = [d0R_raw[:J+1, :J+1, :].copy(), 
+                 d1R_raw[:J+1, :J+1, :].copy(), 
+                 d2R_raw[:J+1, :J+1, :].copy(), 
+                 d3R_raw[:J+1, :J+1, :].copy(), 
+                 d4R_raw[:J+1, :J+1, :].copy()]
 
+# J+1行目/J+1列目（インデックス J）が操作対象です。
+target_index = J 
+replace_values_sq = lod_raw['std_lod'].iloc[:80] ** 2
+
+for Rmatrix in Rmatrix_raw:
+    # 1. 最終行 (インデックス J) と 最終列 (インデックス J) の要素を0にする
+    
+    # 最終行全体を0にする
+    # Rmatrix[J, :, :]
+    Rmatrix[target_index, :, :] = 0
+    
+    # 最終列全体を0にする
+    # Rmatrix[:, J, :]
+    Rmatrix[:, target_index, :] = 0
+    
+    # 2. 右下隅（対角要素 Rmatrix[J, J, :]）を lod_raw['sig_lod']**2 で置き換える
+    # この操作で、1で0になった右下隅の要素が置き換え値で上書きされます。
+    Rmatrix[target_index, target_index, :] = replace_values_sq.values
+    
+print("✅ Rmatrix_rawの各行列について、最終行と最終列が操作されました。")
+print(f"操作対象の行/列インデックスは {target_index} (J) です。")
+
+Rmatrix_train = [Rmatrix_raw[d][:, :, idx_tS:idx_tE + 1] for d in range(5)]
+print(Rmatrix_train[0][:, :, 0])
+print(Rmatrix_train[0][:, :, 1])
+print(Rmatrix_train[0][:, :, 2])
+print(Rmatrix_train[0][:, :, 3])
 
 ###　Prepare ddP table ---------------------------------------------------------
 
@@ -375,6 +427,5 @@ for seed in range(31, -1, -1): # 0 to 31 in a reverse order
         print("----------------------------------------")
     print(f"d_max = {d_max} done.")
 print("========================================")
-
 
 print("Program end.")

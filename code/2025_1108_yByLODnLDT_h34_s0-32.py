@@ -1,8 +1,11 @@
-### Learn the core field snapshot g(t) using EKF-RNN:
+### Learn the core field snapshot g(t) and LOD using EKF-RNN:
 # Author: Sho Sato
-# Date: 2025-11-06, last update: 2025-11-12
+# Date: 2025-11-06, last update: 2025-12-05
 # d_max=0-4, Drec=34, w0_seed="00000" - "11111" (32 patterns)
+# The estimated execution time for each (d, seed) pair is about 6 hours on M1 Macbook Pro.
+# So the total execution time for all d_max (0-4) and seed (0-31) is about 6 hours × 5 × 32 = 960 hours = 40 days.
 
+import os
 import platform           # Python 3.11.5
 import sys
 
@@ -13,6 +16,8 @@ import EKFtrainedRNN as EKF_RNN
 np.set_printoptions(precision=5, floatmode='fixed', suppress=True)
 pd.options.display.float_format = '{:.5f}'.format
 
+script_name = os.path.basename(__file__)
+print(f"Running script: {script_name}")
 print(f"Python Platform: {platform.platform()}")
 print(f"    Python {sys.version}")
 print(f"     Numpy {np.__version__}")
@@ -21,8 +26,8 @@ print(f"    Pandas {pd.__version__}")
 
 ### Configuration -----------------------------------------------------------
 # load/save directories
-load_src = "./MCM2024/processed"
-save_dir = "./trained_models/2025_1108_LODZonal"
+load_src = "./data/processed"
+save_dir = "./output/2025_1108_yByLODnLDT_h34_s0-32"
 
 # parameters
 dt = 0.25 # dt=0.25yrs (more precisely 365.25×0.25 days)
@@ -182,19 +187,6 @@ print("columns:", columns)
 print(time_raw)
 print(d0R_raw[0, 0, :])
 
-#- target_epoch = 2022.8749
-#- target_epoch = 2024.3749
-#- target_epoch = 2019.6254
-#- target_epoch = 2015.1251
-target_epoch = fE
-print(f"target_epoch = {target_epoch}")
-SV_ref = coef_raw[1].loc[target_epoch, :].values.reshape(-1, 1) # Reference SV at 2019.50
-CF_ref = coef_raw[0].loc[target_epoch, :].values.reshape(-1, 1) # Reference CF at 2019.6254
-TG_ref = CF_ref # target field
-print(target_epoch, "\n", SV_ref[:5])
-
-ddP_table = pd.DataFrame(index=np.arange(0, 5), columns=np.arange(0, 32), dtype=float)
-
 # EKF-RNN setup
 p0_r = 10
 ### d_max 
@@ -205,27 +197,13 @@ Din  = J
 Drec = hidden_unit_size
 Dout = J
 
-#seed = 0
-for seed in range(32):
-    print(f"========================================")
+print(f"========================================")
+
+for seed in range(31, -1, -1): # 0 to 31 in a reverse order
     b_seed = format(seed, '05b') # seed No. as 5-bit binary
     print(f"seed = {seed}, b_seed = {b_seed}")
-    Win0   = 0.01 * checkerboard((Drec, Din ), b_seed[0])
-    Wrec0  = 0.01 * checkerboard((Drec, Drec), b_seed[1])
-    b_rec0 = 0.01 * checkerboard((Drec, 1   ), b_seed[2]).flatten()
-
-    Wout0  = 0.01 * checkerboard((Dout, Drec), b_seed[3])
-    b_out0 = 0.01 * checkerboard((Dout, 1   ), b_seed[4]).flatten()
-
-    print(f"Win0 = {Win0[0, :2]}, Wrec0 = {Wrec0[0, :2]}, b_rec0 = {b_rec0[:2]}")
-    print(f"Wout0 = {Wout0[0, :2]}, b_out0 = {b_out0[:2]}")
-
-    w0, Wshapes = EKF_RNN.matrices_to_statespace([Win0, Wrec0, b_rec0, Wout0, b_out0])
-    Pa0 = p0_r * np.eye(w0.size)
-
-    ht0 = np.zeros(Drec)
-
     for d_max in range(5):
+        print(f"========================================")
         print(f"d_max = {d_max}")
         print(f"========================================")
         ### Training data ------------------------------------------------
@@ -234,12 +212,23 @@ for seed in range(32):
         train_y = coef_train_df[d_max]
         train_R = Rmatrix_train[d_max]
         valid_y = whole_y.loc[fS:fE]
+        
+        ### Initial state w0 -------------------------------------------------------
+        Win0   = 0.01 * checkerboard((Drec, Din ), b_seed[0])
+        Wrec0  = 0.01 * checkerboard((Drec, Drec), b_seed[1])
+        b_rec0 = 0.01 * checkerboard((Drec, 1   ), b_seed[2]).flatten()
 
+        Wout0  = 0.01 * checkerboard((Dout, Drec), b_seed[3])
+        b_out0 = 0.01 * checkerboard((Dout, 1   ), b_seed[4]).flatten()
 
+        print(f"Win0 = {Win0[0, :2]}, Wrec0 = {Wrec0[0, :2]}, b_rec0 = {b_rec0[:2]}")
+        print(f"Wout0 = {Wout0[0, :2]}, b_out0 = {b_out0[:2]}")
+
+        w0, Wshapes = EKF_RNN.matrices_to_statespace([Win0, Wrec0, b_rec0, Wout0, b_out0])
+        Pa0 = p0_r * np.eye(w0.size)
+
+        ht0 = np.zeros(Drec)
         ### Assimilation -------------------------------------------------------------
-
-
-
         print("Assimilation Start")
         print("----------------------------------------")
 
@@ -417,7 +406,6 @@ for seed in range(32):
 
         ### Save results -------------------------------------------------------------
         filename = f"d{d_max}g_{Drec}_{b_seed}_geomag_memos.npz"
-        # filename = "tmp_geomag_memos.npz"
 
         read_file = f"{save_dir}/{filename}"
 
@@ -426,62 +414,18 @@ for seed in range(32):
                     tS_tE_fS_fE=[tS, tE, fS, fE],
                     columns=columns,
                     d0g_memo=dg_memo[0], d0R_memo=dRdiag_memo[0],
-                    d1g_memo=dg_memo[1], # d1R_memo=dRdiag_memo[1],
-                    d2g_memo=dg_memo[2], # d2R_memo=dRdiag_memo[2],
-                    d3g_memo=dg_memo[3], # d3R_memo=dRdiag_memo[3],
-                    d4g_memo=dg_memo[4], # d4R_memo=dRdiag_memo[4],
+                    d1g_memo=dg_memo[1], d1R_memo=dRdiag_memo[1],
+                    d2g_memo=dg_memo[2], d2R_memo=dRdiag_memo[2],
+                    d3g_memo=dg_memo[3], d3R_memo=dRdiag_memo[3],
+                    d4g_memo=dg_memo[4], d4R_memo=dRdiag_memo[4],
                     ht_memo=ht_memo
                     )
 
         print(f"Saved: {read_file}")
 
-        #### Analysis -------------------------------------------------------------
-        print(f"reading {(d_max, Drec, b_seed)}: ", end="")
-
-        try:
-            pred_memos = np.load(read_file, allow_pickle=True)
-            print(f"loaded --> ", end="\n")
-            
-            time = pred_memos['time_memo']      # time - leap frog
-            # SA_memo = pred_memos['d2g_memo'] # RNN prediction of SA
-            # SV_memo = pred_memos['d1g_memo']    # RNN prediction of SV
-            CF_memo = pred_memos['d0g_memo'] # RNN prediction of Core field
-    
-            TG_memo = CF_memo # target field
-    
-            print(f"time={time.shape}, SV={TG_memo.shape} --> ", end="")
-    
-            t_idx = np.where(time == target_epoch)[0][0]
-            print(f"t_idx={t_idx} --> ", end="")
-    
-            TG_rnn = CF_memo[:, t_idx].reshape(-1, 1)
-    
-            ddP2 = get_energy(TG_rnn - TG_ref, [time[t_idx]], columns)
-            sqrtddP = np.sqrt(ddP2.sum())
-    
-            print(f"sqrt(ddP)={sqrtddP:.4f} nT --> ", end="")
-            ddP_table.loc[d_max, seed] = sqrtddP
-    
-            print("ddP table done", end="\n")
-    
-        except FileNotFoundError:
-            print(f"not found {read_file}")
-            continue
-        except Exception as e:
-            print(f"error occurred: {e}")
-            continue
-        else:
-            print("no error --> done")
-
-        ### -------------------------------------------------------------
-
         print(f"seed = {seed}: bseed = {b_seed} done.")
         print("----------------------------------------")
     print(f"d_max = {d_max} done.")
 print("========================================")
-
-export_filename = f"ddP_d0-4_{Drec}_geomag_table.csv"
-ddP_table.to_csv(f"{save_dir}/{export_filename}", float_format="%.4f")
-print(f"Exported: {save_dir}/{export_filename}")
 
 print("Program end.")
