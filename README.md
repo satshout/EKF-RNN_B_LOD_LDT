@@ -29,9 +29,8 @@ This repository consists of the following four directories:
 
 1. `code`
 2. `data`
-3. `log`
-4. `output`
-5. `visualization`
+3. `output`
+4. `visualization`
 
 
 ### code
@@ -84,10 +83,6 @@ The data are used as training inputs for the machine learning models.
 * `processed/`: Preprocessed data, where magnetic field differences have been computed and saved in `.csv` and `.npy` formats
 
 
-### log
-This directory contains log files generated during the execution of the python scripts in the `code` directory. These logs provide information about the training process.
-
-
 ### output
 
 This directory contains the output results of the RNN models.
@@ -97,13 +92,19 @@ This directory contains the output results of the RNN models.
 
 This directory contains jupyter notebooks for visualizing the results presented in the manuscript:
 
+- `visualization/2024_0912_displayMCM2024.ipynb`: Notebook for visualizing MCM-2024 model data.
 
-* `xxx.ipynb`: Generates **Figure 3**
-* `xxx.ipynb`: Generates **Table 2**, **Figures 11 and 12**
-* `xxx.ipynb`: Generates **Figure 10**
-* `xxx.ipynb`: Generates **Table 1**, **Figures 5, 6, 7, and 9**
-* `xxx.ipynb`: Generates **Table 1** and **Figure 8**
+- `visualization/2025_1105_processLODdata.ipynb`: Notebook for processing LOD data (used in `code/2025_1108_yByLODnLDT_h34_s0-32.py` and `code/2025_1205_yBnLODyLDT_h34_s0-32.py`).
 
+- `visualization/2025_1111_vizMCM-RNN_derivative.ipynb`: Notebook for visualizing the results of RNN trained with MCM-2024 model with different orders of derivatives (for Chapter 3). 
+  - Other notebooks for visualizing the results of RNN trained with MCM-2024 model with different initial states are available on the following repository: 
+    > Sato, S., Lesur, V., Nakano, S., Minami, T., Matsushima, M., & Toh, H. (2025). IGRF-14 Japanese Candidate Model. Zenodo. https://doi.org/10.5281/zenodo.15726524 
+  
+- `visualization/2025_1112_viz2015SApulse_analysis.ipynb`: Notebooks for visualizing the results of RNN trained with MCM-2024 model, RNN trained with 2015 SA data, and RNN trained with GAP data, respectively (for Chapter 4).
+  - `visualization/2025_1114_viz2015MCM_Br.ipynb`
+  - `visualization/2025_1113_viz2015RNN_Br.ipynb`
+  - `visualization/2025_1113_viz2015GAP_Br.ipynb`
+- `visualization/2025_1209_vizMCM_LOD_LDT-RNN.ipynb`: Notebook for visualizing the results of RNN trained with MCM-2024 + LOD data + first time derivative of LOD data (for Chapter 4 and 5).
 
 ## Closing Remarks
 
@@ -111,7 +112,7 @@ This directory contains jupyter notebooks for visualizing the results presented 
 
 The code in this repository can be executed using the Python environment described in [environment.yml](environment.yml).
 
-However, the notebook `visualization/2025_12xx_SV_r_magnetomap.ipynb` requires a different virtual environment, as described in the [IAGA tutorial](https://github.com/IAGA-VMOD/IGRF14eval/blob/main/README.md#local-development):
+However, the notebook `visualization/2025_11xx_viz2015XXX_Br.ipynb` requires a different virtual environment, as described in the [IAGA tutorial](https://github.com/IAGA-VMOD/IGRF14eval/blob/main/README.md#local-development):
 
 [https://github.com/IAGA-VMOD/IGRF14eval/blob/main/environment-base.yml](https://github.com/IAGA-VMOD/IGRF14eval/blob/main/environment-base.yml)
 
