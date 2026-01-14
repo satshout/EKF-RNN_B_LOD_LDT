@@ -1,5 +1,7 @@
 # EKF-RNN_B_LOD_LDT
 
+[![DOI](https://zenodo.org/badge/1110235955.svg)](https://zenodo.org/badge/latestdoi/1110235955)
+
 ## Contributers
 
 - Sho SATO, *Graduate School of Science, Kyoto University*

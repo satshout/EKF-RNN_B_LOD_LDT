@@ -1,0 +1,9 @@
+cff-version: 1.1.0
+message: "Cite as"
+authors:
+  - family-names: Sato
+    given-names: Sho
+    orcid: https://orcid.org/0009-0007-8811-9573
+    affiliation: "Graduate School of Science, Kyoto University, JAPAN"
+title: "Estimation of Geomagnetic Secular Variation by Machine Learning with Extended Kalman Filter"
+doi: 10.5281/zenodo.10449856
