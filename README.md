@@ -2,11 +2,6 @@
 
 [![DOI](https://zenodo.org/badge/1110235955.svg)](https://zenodo.org/badge/latestdoi/1110235955)
 
-## Contributers
-
-- Sho SATO, *Graduate School of Science, Kyoto University*
-
-
 ## Introduction
 
 This repository contains the figures and codes confirmed for the master thesis 
@@ -16,7 +11,6 @@ This repository contains the figures and codes confirmed for the master thesis
 submitted to the Graduate School of Science, Kyoto University,  
 in fulfillment of the requirements for a Master’s degree,  
 April 2026.
-
 
 The code is designed to estimate future geomagnetic secular variation by training on time series of geomagnetic field data and Earth's Length-Of-Day data using machine learning techniques.
 
