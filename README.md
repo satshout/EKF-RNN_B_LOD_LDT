@@ -10,7 +10,7 @@
 ## Introduction
 
 This repository contains the figures and codes confirmed for the master thesis 
-> **Leveraging Length-of-day Data In Recurrent Neural Networks For Predicting Geomagnetic Secular Acceleration**
+> **Estimation of Geomagnetic Secular Variation by Machine Learning with Extended Kalman Filter**
 > 
 > by Sho SATO,  
 submitted to the Graduate School of Science, Kyoto University,  
