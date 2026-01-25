@@ -1,6 +1,4 @@
-# EKF-RNN_B_LOD_LDT
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18244945.svg)](https://doi.org/10.5281/zenodo.18244944)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18244944.svg)](https://doi.org/10.5281/zenodo.18244944)
 
 ## Introduction
 
@@ -32,6 +30,12 @@ This repository consists of the following four directories:
 ### code
 
 This directory contains python code files used to process data and train models using machine learning. The hidden node size of RNN is set to $D_\mathbf{h} = 34$.
+
+* `EKFtrainedRNN.py`: A module that defines the RNN model class trained with the extended Kalman filter (EKF).
+* `geomagRNNpred.py`: A module that defines functions for geomagnetic field prediction using the EKF-RNN model.
+
+* `2023_1214_SARIMAX(p,d,0)_heatmap.ipynb`: A script that generates heatmaps of SARIMAX(p,d,0) model performance for various combinations of parameters (p,d) (Chapter 2).
+* `2023_1217_VAR_p1_d2.ipynb`: A script that generates geomagnetic forecast with VAR(1) model trained with SA snapshots (Chapter 2).
 
 * `2024_0912_processMCM2024.ipynb`: A script that computes differences in the provided magnetic field data and converts them to `.csv` and `.npy` formats
 
@@ -88,13 +92,15 @@ This directory contains the output results of the RNN models.
 
 This directory contains jupyter notebooks for visualizing the results presented in the manuscript:
 
+- `visualization/2024_0514_ARparams_demo.ipynb`: Notebook demonstrating the AR model parameters used in Subsection 2.1.3.
+
 - `visualization/2024_0912_displayMCM2024.ipynb`: Notebook for visualizing MCM-2024 model data.
 
 - `visualization/2025_1105_processLODdata.ipynb`: Notebook for processing LOD data (used in `code/2025_1108_yByLODnLDT_h34_s0-32.py` and `code/2025_1205_yBnLODyLDT_h34_s0-32.py`).
 
 - `visualization/2025_1111_vizMCM-RNN_derivative.ipynb`: Notebook for visualizing the results of RNN trained with MCM-2024 model with different orders of derivatives (for Chapter 3). 
   - Other notebooks for visualizing the results of RNN trained with MCM-2024 model with different initial states are available on the following repository: 
-    > Sato, S., Lesur, V., Nakano, S., Minami, T., Matsushima, M., & Toh, H. (2025). IGRF-14 Japanese Candidate Model. Zenodo. https://doi.org/10.5281/zenodo.15726524 
+    > Sato, S., Lesur, V., Nakano, S., Minami, T., Matsushima, M., & Toh, H. (2025). IGRF-14 Japanese Candidate Model. Zenodo. <https://doi.org/10.5281/zenodo.15726524> 
   
 - `visualization/2025_1112_viz2015SApulse_analysis.ipynb`: Notebooks for visualizing the results of RNN trained with MCM-2024 model, RNN trained with 2015 SA data, and RNN trained with GAP data, respectively (for Chapter 4).
   - `visualization/2025_1114_viz2015MCM_Br.ipynb`
